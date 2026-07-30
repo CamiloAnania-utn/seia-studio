@@ -55,15 +55,14 @@ const CatalogManager = () => {
     }
   };
 
+  // --- ELIMINAR SERVICIO ---
   const handleDeleteService = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este servicio? (No afectará tu historial pasado)")) {
-      try {
-        await deleteCatalogoItem(id);
-        mostrarAlerta("Servicio eliminado correctamente");
-        loadData();
-      } catch (error) {
-        mostrarAlerta("Error al eliminar el servicio", "error");
-      }
+    try {
+      await deleteCatalogoItem(id);
+      mostrarAlerta("Servicio eliminado correctamente");
+      loadData();
+    } catch (error) {
+      mostrarAlerta("Error al eliminar el servicio", "error");
     }
   };
 
@@ -90,15 +89,14 @@ const CatalogManager = () => {
     }
   };
 
+  // --- ELIMINAR CATEGORÍA ---
   const handleDeleteCategory = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas ocultar esta categoría?")) {
-      try {
-        await deleteCategoria(id);
-        mostrarAlerta("Categoría ocultada correctamente");
-        loadData();
-      } catch (error) {
-        mostrarAlerta("Error al eliminar la categoría", "error");
-      }
+    try {
+      await deleteCategoria(id);
+      mostrarAlerta("Categoría ocultada correctamente");
+      loadData();
+    } catch (error) {
+      mostrarAlerta("Error al eliminar la categoría", "error");
     }
   };
 
