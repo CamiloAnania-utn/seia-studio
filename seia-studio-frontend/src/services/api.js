@@ -1,4 +1,4 @@
-const API_URL = 'https://seia-studio.onrender.com/api';
+const API_URL = '[https://seia-studio.onrender.com](https://seia-studio.onrender.com)/api';
 
 export const fetchDashboardData = async () => {
   // Por ahora obtendremos las transacciones para calcular los KPIs
