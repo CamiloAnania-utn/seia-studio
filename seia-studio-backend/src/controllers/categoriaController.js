@@ -22,14 +22,16 @@ const crearCategoria = async (req, res) => {
   }
 };
 
-// Obtener todas las categorías
+// Obtener todas las categorías activas
 const obtenerCategorias = async (req, res) => {
   try {
-    const categorias = await Categoria.findAll();
+    const categorias = await Categoria.findAll({
+      where: { activo: true }, // EL FILTRO CLAVE: Solo devuelve las categorías que no han sido borradas
+      order: [['nombre', 'ASC']] // Opcional: Las ordena alfabéticamente para que se vea más ordenado
+    });
     res.status(200).json(categorias);
   } catch (error) {
-    console.error('Error al obtener categorías:', error);
-    res.status(500).json({ error: 'Hubo un error al leer las categorías' });
+    res.status(500).json({ error: error.message });
   }
 };
 
