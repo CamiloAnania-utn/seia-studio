@@ -1,69 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const ItemForm = ({ type, onSubmit, onCancel }) => {
+const ItemForm = ({ type, onSubmit, onCancel, initialData }) => {
   const [nombre, setNombre] = useState('');
-  const [precio, setPrecio] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [precio_actual, setPrecioActual] = useState('');
 
-  const handleSubmit = async (e) => {
+  // Efecto que detecta si estamos editando para autocompletar los campos
+  useEffect(() => {
+    if (initialData) {
+      setNombre(initialData.nombre);
+      if (type === 'servicio') {
+        setPrecioActual(initialData.precio_actual);
+      }
+    } else {
+      setNombre('');
+      setPrecioActual('');
+    }
+  }, [initialData, type]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    
-    // Si es servicio, enviamos nombre y precio. Si es categoría, solo el nombre.
-    const data = type === 'servicio' 
-      ? { nombre, precio_actual: parseFloat(precio) }
-      : { nombre };
-
-    await onSubmit(data);
-    setLoading(false);
+    if (type === 'servicio') {
+      onSubmit({ nombre, precio_actual: parseFloat(precio_actual) });
+    } else {
+      onSubmit({ nombre });
+    }
   };
 
   return (
-    <div className="mt-4 p-4 border border-barber-gray/20 rounded-lg bg-barber-dark">
-      <h4 className="text-barber-light mb-4 font-medium">
-        Agregar nuevo {type === 'servicio' ? 'servicio' : 'gasto'}
+    <form onSubmit={handleSubmit} className="bg-barber-dark p-4 rounded-lg border border-barber-gray/20">
+      <h4 className="text-white font-medium mb-4">
+        {initialData ? `Editar ${type}` : `Nuevo ${type}`}
       </h4>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input 
-          type="text" 
-          placeholder={`Nombre del ${type === 'servicio' ? 'servicio' : 'gasto'}`}
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className="bg-barber-card text-white p-2 rounded border border-barber-gray/50 outline-none focus:border-barber-green"
-          required
-        />
+      
+      <div className="space-y-4">
+        <div>
+          <label className="block text-barber-gray text-sm mb-1">Nombre</label>
+          <input 
+            type="text" 
+            required 
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className="w-full bg-barber-card text-white p-2 rounded border border-barber-gray/20 outline-none focus:border-barber-green"
+            placeholder={type === 'servicio' ? 'Ej: Corte Clásico' : 'Ej: Insumos'}
+          />
+        </div>
         
         {type === 'servicio' && (
-          <input 
-            type="number" 
-            placeholder="Precio actual ($)"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            className="bg-barber-card text-white p-2 rounded border border-barber-gray/50 outline-none focus:border-barber-green"
-            required
-            min="0"
-          />
+          <div>
+            <label className="block text-barber-gray text-sm mb-1">Precio Actual ($)</label>
+            <input 
+              type="number" 
+              required 
+              min="0"
+              value={precio_actual}
+              onChange={(e) => setPrecioActual(e.target.value)}
+              className="w-full bg-barber-card text-white p-2 rounded border border-barber-gray/20 outline-none focus:border-barber-green"
+              placeholder="15000"
+            />
+          </div>
         )}
-        
-        <div className="flex gap-2 mt-2">
-          <button 
-            type="button" 
-            onClick={onCancel}
-            className="flex-1 p-2 text-barber-gray hover:text-white transition"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit" 
-            className="flex-1 p-2 bg-barber-green text-barber-dark font-bold rounded hover:opacity-90 transition"
-            disabled={loading}
-          >
-            {loading ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <button 
+          type="button" 
+          onClick={onCancel}
+          className="flex-1 p-2 text-barber-gray hover:text-white transition"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          className={`flex-1 p-2 text-barber-dark font-bold rounded transition ${type === 'servicio' ? 'bg-barber-green hover:bg-barber-green/90' : 'bg-barber-red hover:bg-barber-red/90'}`}
+        >
+          {initialData ? 'Guardar Cambios' : 'Crear'}
+        </button>
+      </div>
+    </form>
   );
 };
 

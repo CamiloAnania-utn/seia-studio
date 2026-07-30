@@ -87,3 +87,37 @@ export const fetchTransacciones = async () => {
     throw error;
   }
 };
+
+// --- ABMC CATÁLOGO (Edición y Baja) ---
+export const updateCatalogoItem = async (id, data) => {
+  const response = await fetch(`${API_URL}/catalogo/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Error al actualizar el servicio');
+  return await response.json();
+};
+
+export const deleteCatalogoItem = async (id) => {
+  const response = await fetch(`${API_URL}/catalogo/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error('Error al eliminar el servicio');
+  return await response.json();
+};
+
+// --- ABMC CATEGORÍAS (Edición y Baja) ---
+export const updateCategoria = async (id, data) => {
+  const response = await fetch(`${API_URL}/categorias/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Error al actualizar la categoría');
+  return await response.json();
+};
+
+export const deleteCategoria = async (id) => {
+  const response = await fetch(`${API_URL}/categorias/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error('Error al eliminar la categoría');
+  return await response.json();
+};
