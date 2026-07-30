@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from './Sidebar';
-import BottomBar from './BottomBar';
+import Sidebar from './SideBar.jsx';
+import BottomBar from './BottomBar.jsx';
 
 const MainLayout = ({ children }) => {
   return (
