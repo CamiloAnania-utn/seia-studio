@@ -6,20 +6,28 @@ import {
   updateCategoria, deleteCategoria
 } from '../../services/api';
 import ItemForm from './ItemForm';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const CatalogManager = () => {
   const [activeTab, setActiveTab] = useState('servicios');
   const [servicios, setServicios] = useState([]);
   const [categorias, setCategorias] = useState([]);
   
-  // Estados para controlar si se muestra el formulario y qué item estamos editando
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
 
-  // Función para recargar las listas desde el backend
+  // Estado para la notificación flotante (Toast)
+  const [notificacion, setNotificacion] = useState({ show: false, mensaje: '', tipo: '' });
+
+  const mostrarAlerta = (mensaje, tipo = 'success') => {
+    setNotificacion({ show: true, mensaje, tipo });
+    setTimeout(() => {
+      setNotificacion({ show: false, mensaje: '', tipo: '' });
+    }, 3000);
+  };
+
   const loadData = () => {
     fetchCatalogo().then(setServicios).catch(console.error);
     fetchCategorias().then(setCategorias).catch(console.error);
@@ -34,14 +42,16 @@ const CatalogManager = () => {
     try {
       if (editingService) {
         await updateCatalogoItem(editingService.id, data);
+        mostrarAlerta("¡Servicio actualizado con éxito!");
       } else {
         await createCatalogoItem(data);
+        mostrarAlerta("¡Servicio creado con éxito!");
       }
       setShowServiceForm(false);
       setEditingService(null);
       loadData(); 
     } catch (error) {
-      console.error("Error al guardar:", error);
+      mostrarAlerta("Hubo un problema: " + error.message, "error");
     }
   };
 
@@ -49,9 +59,10 @@ const CatalogManager = () => {
     if (window.confirm("¿Estás seguro de que deseas eliminar este servicio? (No afectará tu historial pasado)")) {
       try {
         await deleteCatalogoItem(id);
+        mostrarAlerta("Servicio eliminado correctamente");
         loadData();
       } catch (error) {
-        console.error("Error al eliminar:", error);
+        mostrarAlerta("Error al eliminar el servicio", "error");
       }
     }
   };
@@ -66,14 +77,16 @@ const CatalogManager = () => {
     try {
       if (editingCategory) {
         await updateCategoria(editingCategory.id, data);
+        mostrarAlerta("¡Categoría actualizada con éxito!");
       } else {
         await createCategoria(data);
+        mostrarAlerta("¡Categoría creada con éxito!");
       }
       setShowCategoryForm(false);
       setEditingCategory(null);
       loadData();
     } catch (error) {
-      console.error("Error al guardar:", error);
+      mostrarAlerta("Hubo un problema: " + error.message, "error");
     }
   };
 
@@ -81,9 +94,10 @@ const CatalogManager = () => {
     if (window.confirm("¿Estás seguro de que deseas ocultar esta categoría?")) {
       try {
         await deleteCategoria(id);
+        mostrarAlerta("Categoría ocultada correctamente");
         loadData();
       } catch (error) {
-        console.error("Error al eliminar:", error);
+        mostrarAlerta("Error al eliminar la categoría", "error");
       }
     }
   };
@@ -94,7 +108,20 @@ const CatalogManager = () => {
   };
 
   return (
-    <div className="p-4 lg:p-0">
+    <div className="p-4 lg:p-0 relative">
+      
+      {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
+      {notificacion.show && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border animate-bounce ${
+          notificacion.tipo === 'error' 
+            ? 'bg-red-500/10 border-red-500 text-red-400' 
+            : 'bg-barber-green/10 border-barber-green text-barber-green'
+        }`}>
+          {notificacion.tipo === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+          <span className="text-sm font-medium">{notificacion.mensaje}</span>
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold mb-6 text-barber-light">Gestión de Inventario</h2>
       
       {/* Pestañas */}
@@ -127,7 +154,6 @@ const CatalogManager = () => {
                     <span className="text-barber-green font-bold">${parseFloat(s.precio_actual).toLocaleString()}</span>
                   </div>
                   
-                  {/* Botones ABMC (Ocultos en PC hasta hacer hover, siempre visibles en móvil) */}
                   <div className="flex items-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <button onClick={() => openEditService(s)} className="p-2 text-orange-500 hover:bg-orange-500/10 rounded transition-colors" title="Editar">
                       <Pencil size={18} />
@@ -168,7 +194,6 @@ const CatalogManager = () => {
                 <li key={c.id} className="py-3 flex justify-between items-center group">
                   <span className="text-barber-light">{c.nombre}</span>
                   
-                  {/* Botones ABMC */}
                   <div className="flex items-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <button onClick={() => openEditCategory(c)} className="p-2 text-orange-500 hover:bg-orange-500/10 rounded transition-colors" title="Editar">
                       <Pencil size={18} />
