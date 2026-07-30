@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-barber-dark: #121212;
+  --color-barber-card: #1E1E1E;
+  --color-barber-gray: #888888;
+  --color-barber-light: #F5F5F5;
+  --color-barber-green: #22c55e;
+  --color-barber-red: #ef4444;
+}
+
+body {
+  @apply bg-barber-dark text-barber-light m-0 p-0 font-sans antialiased;
+}

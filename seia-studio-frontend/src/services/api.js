@@ -1,0 +1,89 @@
+const API_URL = 'http://localhost:3000/api';
+
+export const fetchDashboardData = async () => {
+  // Por ahora obtendremos las transacciones para calcular los KPIs
+  const response = await fetch(`${API_URL}/transacciones`);
+  if (!response.ok) throw new Error('Error al conectar con el backend');
+  return await response.json();
+};
+
+// --- SERVICIOS DEL CATÁLOGO ---
+export const fetchCatalogo = async () => {
+  const response = await fetch(`${API_URL}/catalogo`);
+  if (!response.ok) throw new Error('Error al cargar el catálogo');
+  return await response.json();
+};
+
+export const createCatalogoItem = async (data) => {
+  const response = await fetch(`${API_URL}/catalogo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Error al crear el servicio');
+  return await response.json();
+};
+
+// --- CATEGORÍAS DE GASTOS ---
+
+// Obtener todas las categorías (para los gastos)
+export const fetchCategorias = async () => {
+  try {
+    const response = await fetch(`${API_URL}/categorias`);
+    if (!response.ok) throw new Error('Error al obtener categorías');
+    return await response.json();
+  } catch (error) {
+    console.error('Error en fetchCategorias:', error);
+    throw error;
+  }
+};
+
+export const createCategoria = async (data) => {
+  try {
+    const response = await fetch(`${API_URL}/categorias`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    console.error('Error en createCategoria:', error);
+    throw error;
+  }
+  if (!response.ok) throw new Error('Error al crear la categoría');
+  return await response.json();
+};
+
+// Enviar una nueva transacción (Ingreso o Egreso) al backend
+export const crearTransaccion = async (transaccionData) => {
+  try {
+    const response = await fetch(`${API_URL}/transacciones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(transaccionData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al registrar la transacción');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en crearTransaccion:', error);
+    throw error;
+  }
+};
+
+// Obtener el historial completo de transacciones
+export const fetchTransacciones = async () => {
+  try {
+    const response = await fetch(`${API_URL}/transacciones`);
+    if (!response.ok) throw new Error('Error al obtener el historial');
+    return await response.json();
+  } catch (error) {
+    console.error('Error en fetchTransacciones:', error);
+    throw error;
+  }
+};
