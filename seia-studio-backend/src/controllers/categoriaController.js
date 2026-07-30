@@ -33,7 +33,40 @@ const obtenerCategorias = async (req, res) => {
   }
 };
 
+// EDITAR CATEGORÍA
+const editarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    
+    const categoria = await Categoria.findByPk(id);
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+
+    await categoria.update({ nombre });
+    res.status(200).json(categoria);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ELIMINAR CATEGORÍA (Baja lógica)
+const eliminarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const categoria = await Categoria.findByPk(id);
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+
+    // Asumimos que tu modelo Categoria tiene el campo 'activo'. 
+    await categoria.update({ activo: false });
+    res.status(200).json({ message: 'Categoría ocultada correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   crearCategoria,
-  obtenerCategorias
+  obtenerCategorias,
+  editarCategoria,
+  eliminarCategoria
 };

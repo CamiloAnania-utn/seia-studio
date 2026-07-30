@@ -16,6 +16,11 @@ const Categoria = sequelize.define('Categoria', {
     type: DataTypes.ENUM('Ingreso', 'Egreso'),
     allowNull: false,
     defaultValue: 'Egreso' // La inmensa mayoría de las categorías serán para clasificar gastos
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false
   }
 }, {
   timestamps: false, // Las categorías son fijas, no necesitamos rastrear cuándo se crearon

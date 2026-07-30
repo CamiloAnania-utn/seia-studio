@@ -38,7 +38,39 @@ const obtenerServicios = async (req, res) => {
   }
 };
 
+// EDITAR (Lápiz Naranja): Actualiza nombre y/o precio
+const editarServicio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, precio_actual } = req.body;
+    
+    const servicio = await Catalogo.findByPk(id);
+    if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
+
+    await servicio.update({ nombre, precio_actual });
+    res.status(200).json(servicio);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ELIMINAR (Papelera Roja): Baja lógica
+const eliminarServicio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const servicio = await Catalogo.findByPk(id);
+    if (!servicio) return res.status(404).json({ error: 'Servicio no encontrado' });
+
+    await servicio.update({ activo: false });
+    res.status(200).json({ message: 'Servicio eliminado correctamente de la vista' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   crearServicio,
-  obtenerServicios
+  obtenerServicios,
+  editarServicio,
+  eliminarServicio
 };
