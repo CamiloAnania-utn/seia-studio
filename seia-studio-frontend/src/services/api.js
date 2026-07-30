@@ -38,6 +38,7 @@ export const fetchCategorias = async () => {
   }
 };
 
+// Crear una categoría corrigiendo el alcance (scope)
 export const createCategoria = async (data) => {
   try {
     const response = await fetch(`${API_URL}/categorias`, {
@@ -45,13 +46,16 @@ export const createCategoria = async (data) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    
+    if (!response.ok) throw new Error('Error al crear la categoría');
+    return await response.json();
+    
   } catch (error) {
     console.error('Error en createCategoria:', error);
     throw error;
   }
-  if (!response.ok) throw new Error('Error al crear la categoría');
-  return await response.json();
 };
+
 
 // Enviar una nueva transacción (Ingreso o Egreso) al backend
 export const crearTransaccion = async (transaccionData) => {
@@ -105,15 +109,22 @@ export const deleteCatalogoItem = async (id) => {
   return await response.json();
 };
 
-// --- ABMC CATEGORÍAS (Edición y Baja) ---
+// Editar una categoría existente corrigiendo el alcance (scope)
 export const updateCategoria = async (id, data) => {
-  const response = await fetch(`${API_URL}/categorias/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error('Error al actualizar la categoría');
-  return await response.json();
+  try {
+    const response = await fetch(`${API_URL}/categorias/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) throw new Error('Error al actualizar la categoría');
+    return await response.json();
+    
+  } catch (error) {
+    console.error('Error en updateCategoria:', error);
+    throw error;
+  }
 };
 
 export const deleteCategoria = async (id) => {
