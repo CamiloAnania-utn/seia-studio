@@ -73,5 +73,6 @@ const eliminarTransaccion = async (req, res) => {
 
 module.exports = {
   crearTransaccion,
-  obtenerTransacciones
+  obtenerTransacciones,
+  eliminarTransaccion
 };
