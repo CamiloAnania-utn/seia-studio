@@ -52,6 +52,25 @@ const obtenerTransacciones = async (req, res) => {
   }
 };
 
+// ELIMINAR TRANSACCIÓN (Borrado Físico)
+const eliminarTransaccion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscamos la transacción por su ID
+    const transaccion = await Transaction.findByPk(id);
+    if (!transaccion) return res.status(404).json({ error: 'Transacción no encontrada' });
+
+    // Destruimos físicamente el registro porque fue un error humano
+    await transaccion.destroy();
+    
+    res.status(200).json({ message: 'Transacción anulada correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   crearTransaccion,
   obtenerTransacciones

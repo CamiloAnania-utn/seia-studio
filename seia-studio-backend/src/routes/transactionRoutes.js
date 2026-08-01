@@ -8,4 +8,7 @@ router.get('/', transactionController.obtenerTransacciones);
 // Ruta para registrar un cobro o pago (POST /api/transacciones)
 router.post('/', transactionController.crearTransaccion);
 
+// Ruta para eliminar una transacción (DELETE /api/transacciones/:id)
+router.delete('/:id', transactionController.eliminarTransaccion);
+
 module.exports = router;
