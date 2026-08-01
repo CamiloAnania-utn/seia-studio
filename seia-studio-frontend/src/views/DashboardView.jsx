@@ -3,6 +3,7 @@ import KPICard from '../components/dashboard/KPICard';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import RecentTransactions from '../components/dashboard/RecentTransactions';
 import { fetchDashboardData, deleteTransaccion } from '../services/api';
+import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 
 const DashboardView = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -19,7 +20,15 @@ const DashboardView = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // NUEVO: Envolvemos la lógica en una función para poder llamarla cada vez que se borre algo
+  // --- NUEVOS ESTADOS PARA UX (MODAL Y TOAST) ---
+  const [notificacion, setNotificacion] = useState({ show: false, mensaje: '', tipo: '' });
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
+
+  const mostrarAlerta = (mensaje, tipo = 'success') => {
+    setNotificacion({ show: true, mensaje, tipo });
+    setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 3000);
+  };
+
   const cargarDashboard = () => {
     fetchDashboardData()
       .then((transacciones) => {
@@ -34,31 +43,23 @@ const DashboardView = () => {
           anioPasado -= 1;
         }
 
-        // Contadores del mes actual y pasado
         let ingresosActual = 0; let egresosActual = 0;
         let ingresosPasado = 0; let egresosPasado = 0;
-        
-        // Contadores Históricos (Todo el tiempo)
-        let totalIngresosHistorico = 0;
-        let totalEgresosHistorico = 0;
+        let totalIngresosHistorico = 0; let totalEgresosHistorico = 0;
 
         transacciones.forEach(t => {
-          // Aseguramos leer la fecha correctamente (createdAt es el estándar de Sequelize)
           const fechaT = new Date(t.createdAt || t.fecha);
           const mesT = fechaT.getMonth();
           const anioT = fechaT.getFullYear();
           const montoTotal = Number(t.monto_efectivo || 0) + Number(t.monto_transferencia || 0);
 
-          // 1. Suma Histórica Total
           if (t.tipo === 'Ingreso') totalIngresosHistorico += montoTotal;
           if (t.tipo === 'Egreso') totalEgresosHistorico += montoTotal;
 
-          // 2. Suma Mensual (Este mes)
           if (anioT === anioActual && mesT === mesActual) {
             if (t.tipo === 'Ingreso') ingresosActual += montoTotal;
             if (t.tipo === 'Egreso') egresosActual += montoTotal;
           } 
-          // 3. Suma Mensual (Mes pasado)
           else if (anioT === anioPasado && mesT === mesPasado) {
             if (t.tipo === 'Ingreso') ingresosPasado += montoTotal;
             if (t.tipo === 'Egreso') egresosPasado += montoTotal;
@@ -82,20 +83,16 @@ const DashboardView = () => {
           return { text: `${signo}${diferencia.toFixed(1)}% vs. mes anterior`, color };
         };
 
-        const balanceActual = ingresosActual - egresosActual;
-        const balancePasado = ingresosPasado - egresosPasado;
-        const balanceAcumuladoFinal = totalIngresosHistorico - totalEgresosHistorico;
-
         setDashboardData({
           ingresos: ingresosActual,
           egresos: egresosActual,
-          balance: balanceActual,
-          balanceTotal: balanceAcumuladoFinal,
+          balance: ingresosActual - egresosActual,
+          balanceTotal: totalIngresosHistorico - totalEgresosHistorico,
           historial: transacciones,
           tendencias: {
             ingresos: calcularTendencia(ingresosActual, ingresosPasado),
             egresos: calcularTendencia(egresosActual, egresosPasado, true),
-            balance: calcularTendencia(balanceActual, balancePasado)
+            balance: calcularTendencia(ingresosActual - egresosActual, ingresosPasado - egresosPasado)
           }
         });
         
@@ -111,20 +108,74 @@ const DashboardView = () => {
     cargarDashboard();
   }, []);
 
-  // NUEVO: Función para ejecutar el borrado físico de la base de datos
-  const handleAnularTransaccion = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas anular esta transacción? Los gráficos se recalcularán automáticamente.")) {
-      try {
-        await deleteTransaccion(id);
-        cargarDashboard(); // Ejecutamos la matemática nuevamente para refrescar los números
-      } catch (error) {
-        alert("Error al anular: " + error.message);
-      }
+  // --- LÓGICA DE BORRADO ACTUALIZADA ---
+  // 1. Abre el modal visual en lugar del window.confirm
+  const handleAnularTransaccion = (id) => {
+    setTransactionToDelete(id);
+  };
+
+  // 2. Ejecuta la anulación al confirmar en el modal
+  const confirmarAnulacion = async () => {
+    if (!transactionToDelete) return;
+    
+    try {
+      await deleteTransaccion(transactionToDelete);
+      mostrarAlerta("Transacción anulada con éxito");
+      cargarDashboard(); 
+    } catch (error) {
+      mostrarAlerta("Error al anular: " + error.message, "error");
+    } finally {
+      setTransactionToDelete(null); // Cierra el modal sea éxito o error
     }
   };
 
   return (
-    <div>
+    <div className="relative">
+      
+      {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
+      {notificacion.show && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border animate-bounce ${
+          notificacion.tipo === 'error' 
+            ? 'bg-red-500/10 border-red-500 text-red-400' 
+            : 'bg-barber-green/10 border-barber-green text-barber-green'
+        }`}>
+          {notificacion.tipo === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+          <span className="text-sm font-medium">{notificacion.mensaje}</span>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN ELEGANTE */}
+      {transactionToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-barber-card border border-barber-gray/20 p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-fade-in">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 text-red-500">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¿Anular transacción?</h3>
+              <p className="text-barber-gray text-sm mb-6">
+                Esta acción no se puede deshacer. La ganancia y los gráficos se recalcularán automáticamente.
+              </p>
+              
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setTransactionToDelete(null)}
+                  className="flex-1 py-3 px-4 bg-transparent border border-barber-gray/30 rounded-xl text-barber-light font-medium hover:bg-white/5 transition"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={confirmarAnulacion}
+                  className="flex-1 py-3 px-4 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition"
+                >
+                  Sí, anular
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold mb-6 text-barber-light">Dashboard Principal</h2>
       
       {loading ? (
@@ -159,7 +210,6 @@ const DashboardView = () => {
           </div>
           <FinancialChart data={dashboardData.historial || []} />
           
-          {/* NUEVO: Le pasamos la función onAnular a la tabla */}
           <RecentTransactions 
             data={dashboardData.historial || []} 
             onAnular={handleAnularTransaccion} 
