@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import KPICard from '../components/dashboard/KPICard';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import RecentTransactions from '../components/dashboard/RecentTransactions';
-import { fetchDashboardData } from '../services/api';
+import { fetchDashboardData, deleteTransaccion } from '../services/api';
 
 const DashboardView = () => {
   const [dashboardData, setDashboardData] = useState({
     ingresos: 0,
     egresos: 0,
     balance: 0,
-    balanceTotal: 0, // <- Nuevo estado para el acumulado histórico
+    balanceTotal: 0,
     historial: [],
     tendencias: {
       ingresos: { text: "Calculando...", color: "text-barber-gray" },
@@ -19,7 +19,8 @@ const DashboardView = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // NUEVO: Envolvemos la lógica en una función para poder llamarla cada vez que se borre algo
+  const cargarDashboard = () => {
     fetchDashboardData()
       .then((transacciones) => {
         const hoy = new Date();
@@ -42,7 +43,8 @@ const DashboardView = () => {
         let totalEgresosHistorico = 0;
 
         transacciones.forEach(t => {
-          const fechaT = new Date(t.fecha);
+          // Aseguramos leer la fecha correctamente (createdAt es el estándar de Sequelize)
+          const fechaT = new Date(t.createdAt || t.fecha);
           const mesT = fechaT.getMonth();
           const anioT = fechaT.getFullYear();
           const montoTotal = Number(t.monto_efectivo || 0) + Number(t.monto_transferencia || 0);
@@ -82,13 +84,13 @@ const DashboardView = () => {
 
         const balanceActual = ingresosActual - egresosActual;
         const balancePasado = ingresosPasado - egresosPasado;
-        const balanceAcumuladoFinal = totalIngresosHistorico - totalEgresosHistorico; // <- La matemática del nuevo KPI
+        const balanceAcumuladoFinal = totalIngresosHistorico - totalEgresosHistorico;
 
         setDashboardData({
           ingresos: ingresosActual,
           egresos: egresosActual,
           balance: balanceActual,
-          balanceTotal: balanceAcumuladoFinal, // <- Lo guardamos para mostrarlo
+          balanceTotal: balanceAcumuladoFinal,
           historial: transacciones,
           tendencias: {
             ingresos: calcularTendencia(ingresosActual, ingresosPasado),
@@ -103,7 +105,23 @@ const DashboardView = () => {
         console.error("Error al cargar los datos:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    cargarDashboard();
   }, []);
+
+  // NUEVO: Función para ejecutar el borrado físico de la base de datos
+  const handleAnularTransaccion = async (id) => {
+    if (window.confirm("¿Estás seguro de que deseas anular esta transacción? Los gráficos se recalcularán automáticamente.")) {
+      try {
+        await deleteTransaccion(id);
+        cargarDashboard(); // Ejecutamos la matemática nuevamente para refrescar los números
+      } catch (error) {
+        alert("Error al anular: " + error.message);
+      }
+    }
+  };
 
   return (
     <div>
@@ -113,7 +131,6 @@ const DashboardView = () => {
         <div className="text-barber-gray">Cargando datos financieros...</div>
       ) : (
         <>
-          {/* Cambiamos la grilla para que soporte 4 tarjetas (lg:grid-cols-4) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <KPICard 
               title="Ingresos del mes" 
@@ -133,7 +150,6 @@ const DashboardView = () => {
               trend={dashboardData.tendencias.balance.text} 
               trendColor={dashboardData.tendencias.balance.color} 
             />
-            {/* NUEVA TARJETA: Caja Histórica Total */}
             <KPICard 
               title="Caja Total Acumulada" 
               amount={`$${dashboardData.balanceTotal.toLocaleString('es-AR')}`} 
@@ -142,7 +158,12 @@ const DashboardView = () => {
             />
           </div>
           <FinancialChart data={dashboardData.historial || []} />
-          <RecentTransactions data={dashboardData.historial || []} />
+          
+          {/* NUEVO: Le pasamos la función onAnular a la tabla */}
+          <RecentTransactions 
+            data={dashboardData.historial || []} 
+            onAnular={handleAnularTransaccion} 
+          />
         </>
       )}
     </div>

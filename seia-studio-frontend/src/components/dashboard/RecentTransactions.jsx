@@ -1,7 +1,8 @@
 import React from 'react';
+import { Trash2 } from 'lucide-react'; // Importamos el ícono de la papelera
 
-const RecentTransactions = ({ data = [] }) => {
-  // Filtro estricto (Slice): Garantizamos que la tabla solo imprima 5 filas como máximo [cite: 790]
+const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular a las propiedades
+  // Filtro estricto (Slice): Garantizamos que la tabla solo imprima 5 filas como máximo
   const recentData = data.slice(0, 5);
 
   return (
@@ -21,16 +22,17 @@ const RecentTransactions = ({ data = [] }) => {
           <tbody className="text-sm">
             {recentData.length > 0 ? (
               recentData.map((t) => {
-                // Lógica del Monto: Suma automáticamente el valor de efectivo y transferencia para el pago "Híbrido" [cite: 791]
+                // Lógica del Monto: Suma automáticamente el valor de efectivo y transferencia para el pago "Híbrido"
                 const total = Number(t.monto_efectivo || 0) + Number(t.monto_transferencia || 0);
                 
                 // Determinamos si es Ingreso o Egreso basándonos en la columna 'tipo'
                 const isIngreso = t.tipo === 'Ingreso';
                 
                 return (
-                  <tr key={t.id} className="border-b border-barber-gray/10 hover:bg-barber-dark/50 transition-colors">
+                  // Agregamos la clase "group" al tr para detectar el hover
+                  <tr key={t.id} className="group border-b border-barber-gray/10 hover:bg-barber-dark/50 transition-colors">
                     <td className="py-3 px-4 text-barber-light whitespace-nowrap">
-                      {new Date(t.fecha).toLocaleDateString('es-AR', {
+                      {new Date(t.createdAt || t.fecha).toLocaleDateString('es-AR', {
                         day: '2-digit', month: 'short', year: 'numeric'
                       })}
                     </td>
@@ -46,10 +48,22 @@ const RecentTransactions = ({ data = [] }) => {
                         {t.tipo}
                       </span>
                     </td>
-                    <td className={`py-3 px-4 font-bold text-right whitespace-nowrap ${
-                      isIngreso ? 'text-barber-green' : 'text-red-400'
-                    }`}>
-                      {isIngreso ? '+' : '-'}${total.toLocaleString('es-AR')}
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      {/* Envolvemos el monto y el botón en un flexbox para alinearlos */}
+                      <div className="flex items-center justify-end gap-3">
+                        <span className={`font-bold ${isIngreso ? 'text-barber-green' : 'text-red-400'}`}>
+                          {isIngreso ? '+' : '-'}${total.toLocaleString('es-AR')}
+                        </span>
+                        
+                        {/* Botón de anular oculto hasta hacer hover en la fila */}
+                        <button 
+                          onClick={() => onAnular(t.id)} 
+                          className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/10 rounded"
+                          title="Anular transacción"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

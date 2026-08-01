@@ -132,3 +132,10 @@ export const deleteCategoria = async (id) => {
   if (!response.ok) throw new Error('Error al eliminar la categoría');
   return await response.json();
 };
+
+// NUEVO: Anular/Eliminar una transacción errónea
+export const deleteTransaccion = async (id) => {
+  const response = await fetch(`${API_URL}/transacciones/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error('Error al anular la transacción');
+  return await response.json();
+};
