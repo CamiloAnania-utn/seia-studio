@@ -72,7 +72,7 @@ const Sidebar = () => {
 
       {/* Pie de la barra lateral (Opcional) */}
       <div className="text-xs text-barber-gray text-center pt-4 border-t border-barber-gray/10">
-        v1.0.0 Pro - Full Stack - por Camilo Ananía
+        v1.1 - Full Stack - por Camilo Ananía
       </div>
 
     </aside>
