@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchCatalogo, fetchCategorias, crearTransaccion } from '../services/api';
-import { CheckCircle, AlertCircle } from 'lucide-react'; // <- Importamos los íconos
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const TransactionView = () => {
   // --- ESTADOS GENERALES ---
@@ -311,8 +311,25 @@ const TransactionView = () => {
               )}
 
               <div className="flex gap-3">
-                <button onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); }} className="flex-1 p-3 text-barber-gray hover:text-white transition">Volver</button>
-                <button onClick={handleConfirmar} disabled={!metodoPago} className="flex-1 p-3 rounded-lg font-bold bg-barber-green text-barber-dark disabled:opacity-50 transition hover:opacity-90">Confirmar</button>
+                <button 
+                  onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); }} 
+                  disabled={isSubmitting}
+                  className="flex-1 p-3 text-barber-gray hover:text-white transition disabled:opacity-50"
+                >
+                  Volver
+                </button>
+                {/* BOTÓN DE CONFIRMAR INGRESO MODIFICADO */}
+                <button 
+                  onClick={handleConfirmar} 
+                  disabled={!metodoPago || isSubmitting} 
+                  className={`flex-1 p-3 rounded-lg font-bold transition-all ${
+                    (!metodoPago || isSubmitting)
+                      ? 'bg-barber-green text-barber-dark opacity-50 cursor-not-allowed'
+                      : 'bg-barber-green text-barber-dark hover:opacity-90'
+                  }`}
+                >
+                  {isSubmitting ? 'Procesando...' : 'Confirmar'}
+                </button>
               </div>
             </div>
           )}
@@ -379,12 +396,17 @@ const TransactionView = () => {
 
           </div>
 
+          {/* BOTÓN DE CONFIRMAR EGRESO MODIFICADO */}
           <button 
             onClick={handleConfirmar} 
-            disabled={!metodoPago || !montoTotalEgreso || !conceptoEgreso || !selectedCategoria} 
-            className="w-full p-4 rounded-lg font-bold bg-red-500 text-white disabled:opacity-50 hover:bg-red-600 transition"
+            disabled={!metodoPago || !montoTotalEgreso || !conceptoEgreso || !selectedCategoria || isSubmitting} 
+            className={`w-full p-4 rounded-lg font-bold transition-all ${
+              (!metodoPago || !montoTotalEgreso || !conceptoEgreso || !selectedCategoria || isSubmitting)
+                ? 'bg-red-500 text-white opacity-50 cursor-not-allowed'
+                : 'bg-red-500 text-white hover:bg-red-600'
+            }`}
           >
-            Registrar Salida de Dinero
+            {isSubmitting ? 'Procesando...' : 'Registrar Salida de Dinero'}
           </button>
         </div>
       )}
