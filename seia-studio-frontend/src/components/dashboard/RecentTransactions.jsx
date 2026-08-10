@@ -55,10 +55,10 @@ const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular 
                           {isIngreso ? '+' : '-'}${total.toLocaleString('es-AR')}
                         </span>
                         
-                        {/* Botón de anular oculto hasta hacer hover en la fila */}
+                        {/* Botón de anular siempre visible y listo para la pantalla táctil */}
                         <button 
                           onClick={() => onAnular(t.id)} 
-                          className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/10 rounded"
+                          className="text-red-500 p-1 hover:bg-red-500/10 rounded transition-colors"
                           title="Anular transacción"
                         >
                           <Trash2 size={16} />
