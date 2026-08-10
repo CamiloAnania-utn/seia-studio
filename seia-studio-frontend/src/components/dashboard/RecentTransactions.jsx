@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react'; // Importamos el ícono de la papelera
 
 const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular a las propiedades
   // Filtro estricto (Slice): Garantizamos que la tabla solo imprima 5 filas como máximo
-  const recentData = data.slice(0, 5);
+  const recentData = data.slice(0, 10);
 
   return (
     <div className="bg-barber-card p-6 rounded-xl border border-barber-gray/20 shadow-lg mt-8 overflow-hidden">
