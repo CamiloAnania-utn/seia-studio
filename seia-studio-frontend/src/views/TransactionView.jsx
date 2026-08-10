@@ -31,6 +31,8 @@ const TransactionView = () => {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoTransferencia, setMontoTransferencia] = useState(0);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Cargar datos iniciales
   useEffect(() => {
     Promise.all([fetchCatalogo(), fetchCategorias()])
@@ -96,6 +98,10 @@ const TransactionView = () => {
 
   // --- FUNCIÓN CENTRAL DE GUARDADO ---
   const handleConfirmar = async () => {
+
+    // 1. EL CERROJO: Si ya se está enviando, no hagas nada aunque apriete de nuevo
+  if (isSubmitting) return;
+
     let payload = {};
 
     if (activeTab === 'ingreso') {
@@ -139,6 +145,9 @@ const TransactionView = () => {
       };
     }
 
+    // 2. ACTIVAMOS EL CERROJO ANTES DE LLAMAR A LA API
+  setIsSubmitting(true);  
+
     try {
       await crearTransaccion(payload);
       
@@ -168,6 +177,9 @@ const TransactionView = () => {
       // ELIMINAMOS EL ALERT() y activamos el Toast de error
       setNotificacion({ show: true, mensaje: "Hubo un problema: " + error.message, tipo: 'error' });
       setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 4000);
+    } finally {
+      // 3. DESACTIVAMOS EL CERROJO DESPUÉS DE LA OPERACIÓN
+      setIsSubmitting(false);
     }
   };
 
