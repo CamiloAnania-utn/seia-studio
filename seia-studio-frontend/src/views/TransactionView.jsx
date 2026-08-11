@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchCatalogo, fetchCategorias, crearTransaccion } from '../services/api';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TransactionView = () => {
   // --- ESTADOS GENERALES ---
@@ -39,6 +39,23 @@ const TransactionView = () => {
     hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
     return hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
   });
+
+  // --- FUNCIÓN PARA CAMBIAR DÍAS CON FLECHAS ---
+  const cambiarDia = (cantidad) => {
+    // Separamos la fecha manual para evitar saltos de zona horaria
+    const [year, month, day] = fechaTransaccion.split('-');
+    const fecha = new Date(year, month - 1, day);
+    
+    // Sumamos o restamos la cantidad de días (-1 o +1)
+    fecha.setDate(fecha.getDate() + cantidad);
+    
+    // Volvemos a formatear a YYYY-MM-DD
+    const nuevoAnio = fecha.getFullYear();
+    const nuevoMes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const nuevoDia = String(fecha.getDate()).padStart(2, '0');
+    
+    setFechaTransaccion(`${nuevoAnio}-${nuevoMes}-${nuevoDia}`);
+  };
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -221,15 +238,32 @@ const TransactionView = () => {
         </button>
       </div>
 
-      {/* NUEVO SELECTOR DE FECHA (Zona Marcada en Rojo) */}
-      <div className="mb-6 flex items-center justify-end bg-barber-dark/50 p-2 rounded-lg border border-barber-gray/10">
-        <label className="text-barber-gray text-sm mr-3 font-medium">Fecha del movimiento:</label>
+      {/* NUEVO SELECTOR DE FECHA (Centrado con flechas) */}
+      <div className="mb-6 flex items-center justify-center bg-barber-dark/50 p-2 rounded-lg border border-barber-gray/10 gap-4">
+        
+        {/* Botón Día Anterior */}
+        <button 
+          onClick={() => cambiarDia(-1)}
+          className="p-1 rounded-md text-barber-gray hover:text-white hover:bg-barber-gray/20 transition active:scale-95"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
         <input
           type="date"
           value={fechaTransaccion}
           onChange={(e) => setFechaTransaccion(e.target.value)}
-          className="bg-barber-dark text-white p-2 rounded-md border border-barber-gray/30 focus:border-barber-green outline-none text-sm"
+          className="bg-barber-dark text-white p-2 rounded-md border border-barber-gray/30 focus:border-barber-green outline-none text-sm text-center"
         />
+
+        {/* Botón Día Siguiente */}
+        <button 
+          onClick={() => cambiarDia(1)}
+          className="p-1 rounded-md text-barber-gray hover:text-white hover:bg-barber-gray/20 transition active:scale-95"
+        >
+          <ChevronRight size={24} />
+        </button>
+        
       </div>
 
       {/* ================= VISTA DE INGRESOS ================= */}
