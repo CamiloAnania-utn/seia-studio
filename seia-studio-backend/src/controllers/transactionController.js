@@ -3,7 +3,9 @@ const { Transaction, Catalogo, Categoria } = require('../models/associations');
 // Crear un nuevo movimiento de dinero
 const crearTransaccion = async (req, res) => {
   try {
-    const { concepto, tipo, monto_efectivo, monto_transferencia, catalogo_id, categoria_id } = req.body;
+    const { concepto, tipo, monto_efectivo, monto_transferencia, catalogo_id, categoria_id, fecha } = req.body;
+
+    const fechaTransaccion = fecha ? new Date(fecha) : new Date();
 
     // 1. Validación básica de presencia
     if (!concepto || !tipo) {
@@ -25,7 +27,8 @@ const crearTransaccion = async (req, res) => {
       monto_efectivo: monto_efectivo || 0,
       monto_transferencia: monto_transferencia || 0,
       catalogo_id: tipo === 'Ingreso' ? catalogo_id : null,
-      categoria_id: tipo === 'Egreso' ? categoria_id : null
+      categoria_id: tipo === 'Egreso' ? categoria_id : null,
+      fecha: fechaTransaccion
     });
 
     res.status(201).json(nuevaTransaccion);
