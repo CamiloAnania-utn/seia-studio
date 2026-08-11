@@ -33,6 +33,13 @@ const TransactionView = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // --- NUEVO ESTADO: FECHA DE LA TRANSACCIÓN ---
+  const [fechaTransaccion, setFechaTransaccion] = useState(() => {
+    const hoy = new Date();
+    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+    return hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  });
+
   // Cargar datos iniciales
   useEffect(() => {
     Promise.all([fetchCatalogo(), fetchCategorias()])
@@ -127,6 +134,7 @@ const TransactionView = () => {
         tipo: 'Ingreso',
         monto_efectivo: parseFloat(montoEfectivo || 0),
         monto_transferencia: parseFloat(montoTransferencia || 0),
+        fecha: fechaTransaccion
       };
     } else {
       // Validaciones para egresos
@@ -211,6 +219,17 @@ const TransactionView = () => {
         >
           Registrar Gasto
         </button>
+      </div>
+
+      {/* NUEVO SELECTOR DE FECHA (Zona Marcada en Rojo) */}
+      <div className="mb-6 flex items-center justify-end bg-barber-dark/50 p-2 rounded-lg border border-barber-gray/10">
+        <label className="text-barber-gray text-sm mr-3 font-medium">Fecha del movimiento:</label>
+        <input
+          type="date"
+          value={fechaTransaccion}
+          onChange={(e) => setFechaTransaccion(e.target.value)}
+          className="bg-barber-dark text-white p-2 rounded-md border border-barber-gray/30 focus:border-barber-green outline-none text-sm"
+        />
       </div>
 
       {/* ================= VISTA DE INGRESOS ================= */}
