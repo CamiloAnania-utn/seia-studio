@@ -3,7 +3,8 @@ const { Transaction, Catalogo, Categoria } = require('../models/associations');
 // Crear un nuevo movimiento de dinero
 const crearTransaccion = async (req, res) => {
   try {
-    const { concepto, tipo, monto_efectivo, monto_transferencia, catalogo_id, categoria_id, fecha } = req.body;
+    // AÑADIDO: Extraemos 'es_aporte' del req.body junto con el resto de datos
+    const { concepto, tipo, monto_efectivo, monto_transferencia, catalogo_id, categoria_id, fecha, es_aporte } = req.body;
 
     const fechaTransaccion = fecha ? new Date(fecha) : new Date();
 
@@ -28,7 +29,9 @@ const crearTransaccion = async (req, res) => {
       monto_transferencia: monto_transferencia || 0,
       catalogo_id: tipo === 'Ingreso' ? catalogo_id : null,
       categoria_id: tipo === 'Egreso' ? categoria_id : null,
-      fecha: fechaTransaccion
+      fecha: fechaTransaccion,
+      // AÑADIDO: Le decimos al ORM que guarde la bandera de aporte
+      es_aporte: es_aporte || false
     });
 
     res.status(201).json(nuevaTransaccion);
@@ -72,7 +75,6 @@ const eliminarTransaccion = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 module.exports = {
   crearTransaccion,
