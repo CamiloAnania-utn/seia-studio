@@ -20,7 +20,7 @@ const DashboardView = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // --- NUEVOS ESTADOS PARA UX (MODAL Y TOAST) ---
+  // MODAL Y TOAST
   const [notificacion, setNotificacion] = useState({ show: false, mensaje: '', tipo: '' });
   const [transactionToDelete, setTransactionToDelete] = useState(null);
 
@@ -48,6 +48,9 @@ const DashboardView = () => {
         let totalIngresosHistorico = 0; let totalEgresosHistorico = 0;
 
         transacciones.forEach(t => {
+
+          if (t.es_aporte) return; // Ignorar aportes en el cálculo de ingresos/egresos
+
           const fechaT = new Date(t.createdAt || t.fecha);
           const mesT = fechaT.getMonth();
           const anioT = fechaT.getFullYear();
@@ -208,12 +211,9 @@ const DashboardView = () => {
               trendColor="text-barber-gray" 
             />
           </div>
-          <FinancialChart data={dashboardData.historial || []} />
+          <FinancialChart data={dashboardData.historial.filter(t => !t.es_aporte) || []} />
           
-          <RecentTransactions 
-            data={dashboardData.historial || []} 
-            onAnular={handleAnularTransaccion} 
-          />
+          <RecentTransactions data={dashboardData.historial || []} onAnular={handleAnular} onEdit={handleEditTransaction} />
         </>
       )}
     </div>
