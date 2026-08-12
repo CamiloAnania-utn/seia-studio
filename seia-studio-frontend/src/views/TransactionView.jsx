@@ -31,7 +31,11 @@ const TransactionView = () => {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoTransferencia, setMontoTransferencia] = useState(0);
 
+  // --- NUEVO ESTADO: CONTROL DE ENVÍO (Cerrojo) ---
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- NUEVO ESTADO: APORTES (Ignorar en cálculos) ---
+  const [isAporte, setIsAporte] = useState(false);
 
   // --- NUEVO ESTADO: FECHA DE LA TRANSACCIÓN ---
   const [fechaTransaccion, setFechaTransaccion] = useState(() => {
@@ -78,6 +82,7 @@ const TransactionView = () => {
     setMontoEfectivo(parseFloat(servicio.precio_actual));
     setMontoTransferencia(0);
     setStep(2);
+    setIsAporte(false); // Reiniciar el estado de aporte al seleccionar un servicio
   };
 
   const handleCustomChargeInit = () => {
@@ -89,6 +94,7 @@ const TransactionView = () => {
     setMontoEfectivo(0);
     setMontoTransferencia(0);
     setStep(2);
+    setIsAporte(false); // Reiniciar el estado de aporte al iniciar un cobro personalizado
   };
 
   const handleCustomMontoChange = (val) => {
@@ -151,7 +157,8 @@ const TransactionView = () => {
         tipo: 'Ingreso',
         monto_efectivo: parseFloat(montoEfectivo || 0),
         monto_transferencia: parseFloat(montoTransferencia || 0),
-        fecha: fechaTransaccion
+        fecha: fechaTransaccion,
+        es_aporte: isAporte
       };
     } else {
       // Validaciones para egresos
@@ -198,6 +205,7 @@ const TransactionView = () => {
       setMontoCustom('');
       setMontoEfectivo(0);
       setMontoTransferencia(0);
+      setIsAporte(false); // Reiniciar el estado de aporte después de guardar
     } catch (error) {
       // ELIMINAMOS EL ALERT() y activamos el Toast de error
       setNotificacion({ show: true, mensaje: "Hubo un problema: " + error.message, tipo: 'error' });
