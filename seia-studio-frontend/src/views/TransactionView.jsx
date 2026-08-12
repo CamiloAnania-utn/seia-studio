@@ -337,6 +337,19 @@ const TransactionView = () => {
                       className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none font-bold" 
                     />
                   </div>
+                  {/* CHECKBOX DE APORTE "DONACION"*/}
+                  <div className="flex items-center gap-2 mt-4 bg-barber-dark/50 p-3 rounded-lg border border-barber-gray/10">
+                    <input
+                      type="checkbox"
+                      id="esAporte"
+                      checked={isAporte}
+                      onChange={(e) => setIsAporte(e.target.checked)}
+                      className="w-4 h-4 text-barber-green bg-barber-dark border-barber-gray rounded focus:ring-barber-green"
+                    />
+                    <label htmlFor="esAporte" className="text-sm text-barber-gray cursor-pointer">
+                      Es un aporte externo (No suma a estadísticas)
+                    </label>
+                  </div>
                 </div>
               )}
 
