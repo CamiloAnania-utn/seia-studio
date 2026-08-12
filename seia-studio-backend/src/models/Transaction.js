@@ -28,6 +28,10 @@ const Transaction = sequelize.define('Transaction', {
   fecha: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW, // Guarda el momento exacto
+  },
+  es_aporte: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   timestamps: true, // Crea columnas createdAt y updatedAt automáticamente
