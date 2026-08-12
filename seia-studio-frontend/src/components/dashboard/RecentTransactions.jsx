@@ -2,7 +2,7 @@ import React from 'react';
 import { Trash2 } from 'lucide-react'; // Importamos el ícono de la papelera
 
 const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular a las propiedades
-  // Filtro estricto (Slice): Garantizamos que la tabla solo imprima 5 filas como máximo
+  // Filtro estricto (Slice): Garantizamos que la tabla solo imprima 10 filas como máximo
   const recentData = data.slice(0, 10);
 
   return (
@@ -25,8 +25,33 @@ const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular 
                 // Lógica del Monto: Suma automáticamente el valor de efectivo y transferencia para el pago "Híbrido"
                 const total = Number(t.monto_efectivo || 0) + Number(t.monto_transferencia || 0);
                 
-                // Determinamos si es Ingreso o Egreso basándonos en la columna 'tipo'
-                const isIngreso = t.tipo === 'Ingreso';
+                // NUEVO: Lógica de Aportes vs Ingresos/Egresos Operativos
+                const isAporte = t.es_aporte;
+                const isIngreso = t.tipo === 'Ingreso' && !isAporte;
+                const isEgreso = t.tipo === 'Egreso';
+
+                // Clases dinámicas para la etiqueta (badge)
+                let badgeClass = 'bg-barber-gray/10 text-barber-gray';
+                let badgeText = 'APORTE';
+
+                if (isIngreso) {
+                  badgeClass = 'bg-barber-green/10 text-barber-green';
+                  badgeText = 'INGRESO';
+                } else if (isEgreso) {
+                  badgeClass = 'bg-red-500/10 text-red-400';
+                  badgeText = 'EGRESO';
+                }
+
+                // Clases dinámicas para el monto numérico
+                let amountClass = 'text-barber-gray font-normal';
+                let sign = '+';
+
+                if (isIngreso) {
+                  amountClass = 'text-barber-green font-bold';
+                } else if (isEgreso) {
+                  amountClass = 'text-red-400 font-bold';
+                  sign = '-';
+                }
                 
                 return (
                   // Agregamos la clase "group" al tr para detectar el hover
@@ -40,19 +65,17 @@ const RecentTransactions = ({ data = [], onAnular }) => { // Agregamos onAnular 
                       {t.concepto || 'Transacción'}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
-                        isIngreso 
-                          ? 'bg-barber-green/10 text-barber-green' 
-                          : 'bg-red-500/10 text-red-400'
-                      }`}>
-                        {t.tipo}
+                      {/* Etiqueta visual ajustada */}
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${badgeClass}`}>
+                        {badgeText}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       {/* Envolvemos el monto y el botón en un flexbox para alinearlos */}
                       <div className="flex items-center justify-end gap-3">
-                        <span className={`font-bold ${isIngreso ? 'text-barber-green' : 'text-red-400'}`}>
-                          {isIngreso ? '+' : '-'}${total.toLocaleString('es-AR')}
+                        {/* Monto ajustado dinámicamente */}
+                        <span className={amountClass}>
+                          {sign}${total.toLocaleString('es-AR')}
                         </span>
                         
                         {/* Botón de anular siempre visible y listo para la pantalla táctil */}

@@ -22,6 +22,9 @@ const TransactionView = () => {
   const [isCustomCharge, setIsCustomCharge] = useState(false);
   const [conceptoCustom, setConceptoCustom] = useState('');
   const [montoCustom, setMontoCustom] = useState('');
+  
+  // NUEVO ESTADO: APORTE EXTERNO
+  const [isAporte, setIsAporte] = useState(false);
 
   // --- ESTADOS PARA EGRESOS (Gastos) ---
   const [categorias, setCategorias] = useState([]);
@@ -54,9 +57,10 @@ const TransactionView = () => {
   const handleServiceSelect = (servicio) => {
     setIsCustomCharge(false);
     setSelectedService(servicio);
-    setCantidad(1); // Reseteamos la cantidad a 1 al elegir un servicio
+    setCantidad(1); 
     setMontoEfectivo(parseFloat(servicio.precio_actual));
     setMontoTransferencia(0);
+    setIsAporte(false); // Reseteamos el aporte
     setStep(2);
   };
 
@@ -69,14 +73,13 @@ const TransactionView = () => {
     setMetodoPago('');
     setMontoEfectivo(0);
     setMontoTransferencia(0);
+    setIsAporte(false); // Reseteamos el aporte
     setStep(2);
   };
 
-  // NUEVA FUNCIÓN: Manejar el cambio del multiplicador
   const handleCantidadChange = (nuevaCantidad) => {
-    if (nuevaCantidad < 1) return; // No puede ser menor a 1
+    if (nuevaCantidad < 1) return; 
     setCantidad(nuevaCantidad);
-    // Si cambia la cantidad, reseteamos el método de pago para recalcular la matemática
     setMetodoPago('');
     setMontoEfectivo(0);
     setMontoTransferencia(0);
@@ -90,7 +93,6 @@ const TransactionView = () => {
   };
 
   const handleMetodoSelect = (metodo) => {
-    // Calculamos el total usando la cantidad multiplicada
     const total = isCustomCharge 
       ? parseFloat(montoCustom || 0) 
       : (parseFloat(selectedService.precio_actual) * cantidad);
@@ -121,14 +123,12 @@ const TransactionView = () => {
     let payload = {};
 
     if (activeTab === 'ingreso') {
-      // Validaciones previas para cobros
       if (isCustomCharge && (!conceptoCustom || !montoCustom)) {
         setNotificacion({ show: true, mensaje: "Completa la descripción y el monto del cobro.", tipo: 'error' });
         setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 4000);
         return;
       }
 
-      // Matemáticas del total final con el multiplicador
       const total = isCustomCharge 
         ? parseFloat(montoCustom) 
         : (parseFloat(selectedService.precio_actual) * cantidad);
@@ -141,7 +141,6 @@ const TransactionView = () => {
         return;
       }
 
-      // Preparamos el concepto inteligente (Ej: "3x Corte Clásico")
       const conceptoFinal = isCustomCharge 
         ? conceptoCustom 
         : (cantidad > 1 ? `${cantidad}x ${selectedService.nombre}` : selectedService.nombre);
@@ -152,9 +151,9 @@ const TransactionView = () => {
         tipo: 'Ingreso',
         monto_efectivo: parseFloat(montoEfectivo || 0),
         monto_transferencia: parseFloat(montoTransferencia || 0),
+        es_aporte: isAporte // <-- Enviamos la decisión del barbero al servidor
       };
     } else {
-      // Validaciones para egresos
       if (!selectedCategoria || !conceptoEgreso || !montoTotalEgreso || !metodoPago) {
         setNotificacion({ show: true, mensaje: "Por favor completa todos los campos del gasto.", tipo: 'error' });
         setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 4000);
@@ -188,7 +187,8 @@ const TransactionView = () => {
       setSelectedService(null);
       setIsCustomCharge(false);
       setMetodoPago('');
-      setCantidad(1); // Reseteamos la cantidad a 1
+      setCantidad(1); 
+      setIsAporte(false); // Limpiamos el checkbox
       setSelectedCategoria('');
       setConceptoEgreso('');
       setMontoTotalEgreso('');
@@ -213,7 +213,7 @@ const TransactionView = () => {
       {/* INTERRUPTOR DE PESTAÑAS */}
       <div className="flex bg-barber-card p-1 rounded-lg mb-8 border border-barber-gray/20">
         <button
-          onClick={() => { setActiveTab('ingreso'); setMetodoPago(''); setStep(1); setCantidad(1); }}
+          onClick={() => { setActiveTab('ingreso'); setMetodoPago(''); setStep(1); setCantidad(1); setIsAporte(false); }}
           className={`flex-1 py-2 rounded-md font-medium transition-all ${
             activeTab === 'ingreso' 
               ? 'bg-barber-green text-barber-dark shadow-sm' 
@@ -223,7 +223,7 @@ const TransactionView = () => {
           Cobrar Ingreso
         </button>
         <button
-          onClick={() => { setActiveTab('egreso'); setMetodoPago(''); }}
+          onClick={() => { setActiveTab('egreso'); setMetodoPago(''); setIsAporte(false); }}
           className={`flex-1 py-2 rounded-md font-medium transition-all ${
             activeTab === 'egreso' 
               ? 'bg-red-500 text-white shadow-sm' 
@@ -277,13 +277,11 @@ const TransactionView = () => {
                         Precio unitario: ${parseFloat(selectedService.precio_actual).toLocaleString('es-AR')}
                       </p>
                     </div>
-                    {/* El total en verde ahora refleja la multiplicación */}
                     <p className="text-2xl font-bold text-barber-green">
                       ${(parseFloat(selectedService.precio_actual) * cantidad).toLocaleString('es-AR')}
                     </p>
                   </div>
                   
-                  {/* Selector de cantidad */}
                   <div className="flex items-center justify-between bg-barber-dark p-2 rounded-lg border border-barber-gray/20">
                     <span className="text-sm text-barber-gray ml-2">Cantidad de cortes:</span>
                     <div className="flex items-center">
@@ -327,6 +325,20 @@ const TransactionView = () => {
                       className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none font-bold" 
                     />
                   </div>
+
+                  {/* NUEVO CHECKBOX DE APORTE */}
+                  <div className="flex items-center gap-2 mt-4 bg-barber-dark/50 p-3 rounded-lg border border-barber-gray/10">
+                    <input
+                      type="checkbox"
+                      id="esAporte"
+                      checked={isAporte}
+                      onChange={(e) => setIsAporte(e.target.checked)}
+                      className="w-4 h-4 text-barber-green bg-barber-dark border-barber-gray rounded focus:ring-barber-green cursor-pointer"
+                    />
+                    <label htmlFor="esAporte" className="text-sm text-barber-gray cursor-pointer">
+                      Es un aporte externo (No suma a estadísticas)
+                    </label>
+                  </div>
                 </div>
               )}
 
@@ -363,7 +375,7 @@ const TransactionView = () => {
 
               <div className="flex gap-3">
                 <button 
-                  onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); setCantidad(1); }} 
+                  onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); setCantidad(1); setIsAporte(false); }} 
                   disabled={isSubmitting}
                   className="flex-1 p-3 text-barber-gray hover:text-white transition disabled:opacity-50"
                 >
