@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import KPICard from '../components/dashboard/KPICard';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import RecentTransactions from '../components/dashboard/RecentTransactions';
-import { fetchDashboardData, deleteTransaccion, updateTransaccion } from '../services/api';
-import { CheckCircle, AlertCircle, AlertTriangle, X } from 'lucide-react';
+import { fetchDashboardData, deleteTransaccion } from '../services/api';
+import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 
 const DashboardView = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -23,13 +23,6 @@ const DashboardView = () => {
   // MODAL Y TOAST
   const [notificacion, setNotificacion] = useState({ show: false, mensaje: '', tipo: '' });
   const [transactionToDelete, setTransactionToDelete] = useState(null);
-
-  // ESTADOS PARA EL MODAL DE EDICIÓN
-  const [editingTransaction, setEditingTransaction] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    concepto: '', monto_efectivo: 0, monto_transferencia: 0, fecha: '', es_aporte: false
-  });
-  const [isSaving, setIsSaving] = useState(false);
 
   const mostrarAlerta = (mensaje, tipo = 'success') => {
     setNotificacion({ show: true, mensaje, tipo });
@@ -136,33 +129,6 @@ const DashboardView = () => {
     }
   };
 
-  // --- LÓGICA DE EDICIÓN ---
-  const handleEditInit = (transaccion) => {
-    setEditingTransaction(transaccion);
-    setEditFormData({
-      concepto: transaccion.concepto || '',
-      monto_efectivo: transaccion.monto_efectivo || 0,
-      monto_transferencia: transaccion.monto_transferencia || 0,
-      // Manejamos la fecha de manera segura
-      fecha: transaccion.fecha ? new Date(transaccion.fecha).toISOString().split('T')[0] : '',
-      es_aporte: transaccion.es_aporte || false
-    });
-  };
-
-  const handleUpdate = async () => {
-    setIsSaving(true);
-    try {
-      await updateTransaccion(editingTransaction.id, editFormData);
-      mostrarAlerta("Transacción modificada con éxito");
-      setEditingTransaction(null);
-      cargarDashboard(); // Refrescamos las matemáticas
-    } catch (error) {
-      mostrarAlerta("Error al modificar: " + error.message, "error");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div className="relative">
       
@@ -210,88 +176,6 @@ const DashboardView = () => {
         </div>
       )}
 
-      {/* MODAL DE EDICIÓN ELEGANTE */}
-      {editingTransaction && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-barber-card border border-barber-gray/20 rounded-2xl p-6 w-full max-w-md animate-fade-in shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Modificar Transacción</h3>
-              <button onClick={() => setEditingTransaction(null)} className="text-barber-gray hover:text-white transition">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm text-barber-gray mb-1">Concepto / Detalle</label>
-                <input 
-                  type="text" 
-                  value={editFormData.concepto} 
-                  onChange={e => setEditFormData({...editFormData, concepto: e.target.value})} 
-                  className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none transition" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-barber-gray mb-1">Efectivo ($)</label>
-                  <input 
-                    type="number" 
-                    value={editFormData.monto_efectivo} 
-                    onChange={e => setEditFormData({...editFormData, monto_efectivo: e.target.value})} 
-                    className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none transition" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-barber-gray mb-1">Transferencia ($)</label>
-                  <input 
-                    type="number" 
-                    value={editFormData.monto_transferencia} 
-                    onChange={e => setEditFormData({...editFormData, monto_transferencia: e.target.value})} 
-                    className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none transition" 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-barber-gray mb-1">Fecha</label>
-                <input 
-                  type="date" 
-                  value={editFormData.fecha} 
-                  onChange={e => setEditFormData({...editFormData, fecha: e.target.value})} 
-                  className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none transition" 
-                />
-              </div>
-
-              <div className="flex items-center gap-2 mt-2 bg-barber-dark/50 p-3 rounded-lg border border-barber-gray/10">
-                <input 
-                  type="checkbox" 
-                  id="editEsAporte" 
-                  checked={editFormData.es_aporte} 
-                  onChange={e => setEditFormData({...editFormData, es_aporte: e.target.checked})} 
-                  className="w-4 h-4 text-barber-green bg-barber-dark border-barber-gray rounded focus:ring-barber-green cursor-pointer" 
-                />
-                <label htmlFor="editEsAporte" className="text-sm text-barber-gray cursor-pointer">
-                  Es un aporte externo (No suma a estadísticas)
-                </label>
-              </div>
-
-              <button 
-                onClick={handleUpdate} 
-                disabled={isSaving} 
-                className={`w-full mt-2 py-3 px-4 rounded-xl font-bold transition-all ${
-                  isSaving 
-                    ? 'bg-barber-green/50 text-barber-dark/50 cursor-not-allowed' 
-                    : 'bg-barber-green text-barber-dark shadow-lg shadow-barber-green/20 hover:bg-opacity-90'
-                }`}
-              >
-                {isSaving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <h2 className="text-xl font-semibold mb-6 text-barber-light">Dashboard Principal</h2>
       
       {loading ? (
@@ -329,7 +213,6 @@ const DashboardView = () => {
           <RecentTransactions 
             data={dashboardData.historial || []} 
             onAnular={handleAnularTransaccion} 
-            onEdit={handleEditInit} 
           />
         </>
       )}
