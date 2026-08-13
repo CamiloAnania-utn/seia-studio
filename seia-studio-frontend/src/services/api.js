@@ -1,13 +1,5 @@
-// const API_URL = 'https://seia-studio.onrender.com/api';
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-
-export const fetchDashboardData = async () => {
-  // Por ahora obtendremos las transacciones para calcular los KPIs
-  const response = await fetch(`${API_URL}/transacciones`);
-  if (!response.ok) throw new Error('Error al conectar con el backend');
-  return await response.json();
-};
 
 // --- SERVICIOS DEL CATÁLOGO ---
 export const fetchCatalogo = async () => {

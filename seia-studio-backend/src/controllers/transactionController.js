@@ -25,8 +25,8 @@ const crearTransaccion = async (req, res) => {
     const nuevaTransaccion = await Transaction.create({
       concepto,
       tipo,
-      monto_efectivo: monto_efectivo || 0,
-      monto_transferencia: monto_transferencia || 0,
+      monto_efectivo,
+      monto_transferencia,
       catalogo_id: tipo === 'Ingreso' ? catalogo_id : null,
       categoria_id: tipo === 'Egreso' ? categoria_id : null,
       fecha: fechaTransaccion,
