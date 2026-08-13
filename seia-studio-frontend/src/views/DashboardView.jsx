@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import KPICard from '../components/dashboard/KPICard';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import RecentTransactions from '../components/dashboard/RecentTransactions';
-import { fetchDashboardData, deleteTransaccion } from '../services/api';
+import { fetchTransacciones, deleteTransaccion } from '../services/api';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 
 const DashboardView = () => {
@@ -30,7 +30,7 @@ const DashboardView = () => {
   };
 
   const cargarDashboard = () => {
-    fetchDashboardData()
+    fetchTransacciones()
       .then((transacciones) => {
         const hoy = new Date();
         const mesActual = hoy.getMonth();
