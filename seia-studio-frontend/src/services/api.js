@@ -1,5 +1,5 @@
-const API_URL = 'https://seia-studio.onrender.com/api';
-// const API_URL = 'http://localhost:3000/api';
+// const API_URL = 'https://seia-studio.onrender.com/api';
+const API_URL = 'http://localhost:3000/api';
 
 
 export const fetchDashboardData = async () => {
