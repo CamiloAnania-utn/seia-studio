@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchCatalogo, fetchCategorias, crearTransaccion } from '../services/api';
-import { CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const TransactionView = () => {
   // --- ESTADOS GENERALES ---
@@ -15,7 +15,10 @@ const TransactionView = () => {
   const [servicios, setServicios] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   
-  // --- NUEVOS ESTADOS: COBRO PERSONALIZADO ---
+  // NUEVO ESTADO: MULTIPLICADOR DE CANTIDAD
+  const [cantidad, setCantidad] = useState(1);
+  
+  // --- ESTADOS: COBRO PERSONALIZADO ---
   const [isCustomCharge, setIsCustomCharge] = useState(false);
   const [conceptoCustom, setConceptoCustom] = useState('');
   const [montoCustom, setMontoCustom] = useState('');
@@ -31,35 +34,7 @@ const TransactionView = () => {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoTransferencia, setMontoTransferencia] = useState(0);
 
-  // --- NUEVO ESTADO: CONTROL DE ENVÍO (Cerrojo) ---
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // --- NUEVO ESTADO: APORTES (Ignorar en cálculos) ---
-  const [isAporte, setIsAporte] = useState(false);
-
-  // --- NUEVO ESTADO: FECHA DE LA TRANSACCIÓN ---
-  const [fechaTransaccion, setFechaTransaccion] = useState(() => {
-    const hoy = new Date();
-    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
-    return hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-  });
-
-  // --- FUNCIÓN PARA CAMBIAR DÍAS CON FLECHAS ---
-  const cambiarDia = (cantidad) => {
-    // Separamos la fecha manual para evitar saltos de zona horaria
-    const [year, month, day] = fechaTransaccion.split('-');
-    const fecha = new Date(year, month - 1, day);
-    
-    // Sumamos o restamos la cantidad de días (-1 o +1)
-    fecha.setDate(fecha.getDate() + cantidad);
-    
-    // Volvemos a formatear a YYYY-MM-DD
-    const nuevoAnio = fecha.getFullYear();
-    const nuevoMes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const nuevoDia = String(fecha.getDate()).padStart(2, '0');
-    
-    setFechaTransaccion(`${nuevoAnio}-${nuevoMes}-${nuevoDia}`);
-  };
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -79,22 +54,32 @@ const TransactionView = () => {
   const handleServiceSelect = (servicio) => {
     setIsCustomCharge(false);
     setSelectedService(servicio);
+    setCantidad(1); // Reseteamos la cantidad a 1 al elegir un servicio
     setMontoEfectivo(parseFloat(servicio.precio_actual));
     setMontoTransferencia(0);
     setStep(2);
-    setIsAporte(false); // Reiniciar el estado de aporte al seleccionar un servicio
   };
 
   const handleCustomChargeInit = () => {
     setIsCustomCharge(true);
     setSelectedService(null);
+    setCantidad(1);
     setConceptoCustom('');
     setMontoCustom('');
     setMetodoPago('');
     setMontoEfectivo(0);
     setMontoTransferencia(0);
     setStep(2);
-    setIsAporte(false); // Reiniciar el estado de aporte al iniciar un cobro personalizado
+  };
+
+  // NUEVA FUNCIÓN: Manejar el cambio del multiplicador
+  const handleCantidadChange = (nuevaCantidad) => {
+    if (nuevaCantidad < 1) return; // No puede ser menor a 1
+    setCantidad(nuevaCantidad);
+    // Si cambia la cantidad, reseteamos el método de pago para recalcular la matemática
+    setMetodoPago('');
+    setMontoEfectivo(0);
+    setMontoTransferencia(0);
   };
 
   const handleCustomMontoChange = (val) => {
@@ -105,7 +90,10 @@ const TransactionView = () => {
   };
 
   const handleMetodoSelect = (metodo) => {
-    const total = isCustomCharge ? parseFloat(montoCustom || 0) : parseFloat(selectedService.precio_actual);
+    // Calculamos el total usando la cantidad multiplicada
+    const total = isCustomCharge 
+      ? parseFloat(montoCustom || 0) 
+      : (parseFloat(selectedService.precio_actual) * cantidad);
     
     if (total <= 0) {
       setNotificacion({ show: true, mensaje: "Por favor ingrese un monto válido primero.", tipo: 'error' });
@@ -128,9 +116,7 @@ const TransactionView = () => {
 
   // --- FUNCIÓN CENTRAL DE GUARDADO ---
   const handleConfirmar = async () => {
-
-    // 1. EL CERROJO: Si ya se está enviando, no hagas nada aunque apriete de nuevo
-  if (isSubmitting) return;
+    if (isSubmitting) return;
 
     let payload = {};
 
@@ -142,7 +128,11 @@ const TransactionView = () => {
         return;
       }
 
-      const total = isCustomCharge ? parseFloat(montoCustom) : parseFloat(selectedService.precio_actual);
+      // Matemáticas del total final con el multiplicador
+      const total = isCustomCharge 
+        ? parseFloat(montoCustom) 
+        : (parseFloat(selectedService.precio_actual) * cantidad);
+        
       const sumaMontos = parseFloat(montoEfectivo || 0) + parseFloat(montoTransferencia || 0);
       
       if (sumaMontos !== total) {
@@ -151,14 +141,17 @@ const TransactionView = () => {
         return;
       }
 
+      // Preparamos el concepto inteligente (Ej: "3x Corte Clásico")
+      const conceptoFinal = isCustomCharge 
+        ? conceptoCustom 
+        : (cantidad > 1 ? `${cantidad}x ${selectedService.nombre}` : selectedService.nombre);
+
       payload = {
         catalogo_id: isCustomCharge ? null : selectedService.id,
-        concepto: isCustomCharge ? conceptoCustom : selectedService.nombre,
+        concepto: conceptoFinal,
         tipo: 'Ingreso',
         monto_efectivo: parseFloat(montoEfectivo || 0),
         monto_transferencia: parseFloat(montoTransferencia || 0),
-        fecha: fechaTransaccion,
-        es_aporte: isAporte
       };
     } else {
       // Validaciones para egresos
@@ -177,20 +170,17 @@ const TransactionView = () => {
       };
     }
 
-    // 2. ACTIVAMOS EL CERROJO ANTES DE LLAMAR A LA API
-  setIsSubmitting(true);  
+    setIsSubmitting(true);  
 
     try {
       await crearTransaccion(payload);
       
-      // ELIMINAMOS EL ALERT() y activamos el Toast elegante
       setNotificacion({ 
         show: true, 
         mensaje: activeTab === 'ingreso' ? "¡Venta registrada con éxito!" : "Gasto registrado correctamente.", 
         tipo: 'exito' 
       });
       
-      // Ocultar notificación automáticamente después de 3 segundos
       setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 3000);
       
       // Resetear todo el POS
@@ -198,6 +188,7 @@ const TransactionView = () => {
       setSelectedService(null);
       setIsCustomCharge(false);
       setMetodoPago('');
+      setCantidad(1); // Reseteamos la cantidad a 1
       setSelectedCategoria('');
       setConceptoEgreso('');
       setMontoTotalEgreso('');
@@ -205,13 +196,10 @@ const TransactionView = () => {
       setMontoCustom('');
       setMontoEfectivo(0);
       setMontoTransferencia(0);
-      setIsAporte(false); // Reiniciar el estado de aporte después de guardar
     } catch (error) {
-      // ELIMINAMOS EL ALERT() y activamos el Toast de error
       setNotificacion({ show: true, mensaje: "Hubo un problema: " + error.message, tipo: 'error' });
       setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 4000);
     } finally {
-      // 3. DESACTIVAMOS EL CERROJO DESPUÉS DE LA OPERACIÓN
       setIsSubmitting(false);
     }
   };
@@ -225,7 +213,7 @@ const TransactionView = () => {
       {/* INTERRUPTOR DE PESTAÑAS */}
       <div className="flex bg-barber-card p-1 rounded-lg mb-8 border border-barber-gray/20">
         <button
-          onClick={() => { setActiveTab('ingreso'); setMetodoPago(''); setStep(1); }}
+          onClick={() => { setActiveTab('ingreso'); setMetodoPago(''); setStep(1); setCantidad(1); }}
           className={`flex-1 py-2 rounded-md font-medium transition-all ${
             activeTab === 'ingreso' 
               ? 'bg-barber-green text-barber-dark shadow-sm' 
@@ -246,34 +234,6 @@ const TransactionView = () => {
         </button>
       </div>
 
-      {/* NUEVO SELECTOR DE FECHA (Centrado con flechas) */}
-      <div className="mb-6 flex items-center justify-center bg-barber-dark/50 p-2 rounded-lg border border-barber-gray/10 gap-4">
-        
-        {/* Botón Día Anterior */}
-        <button 
-          onClick={() => cambiarDia(-1)}
-          className="p-1 rounded-md text-barber-gray hover:text-white hover:bg-barber-gray/20 transition active:scale-95"
-        >
-          <ChevronLeft size={24} />
-        </button>
-
-        <input
-          type="date"
-          value={fechaTransaccion}
-          onChange={(e) => setFechaTransaccion(e.target.value)}
-          className="bg-barber-dark text-white p-2 rounded-md border border-barber-gray/30 focus:border-barber-green outline-none text-sm text-center"
-        />
-
-        {/* Botón Día Siguiente */}
-        <button 
-          onClick={() => cambiarDia(1)}
-          className="p-1 rounded-md text-barber-gray hover:text-white hover:bg-barber-gray/20 transition active:scale-95"
-        >
-          <ChevronRight size={24} />
-        </button>
-        
-      </div>
-
       {/* ================= VISTA DE INGRESOS ================= */}
       {activeTab === 'ingreso' && (
         <div className="animate-fade-in">
@@ -288,7 +248,7 @@ const TransactionView = () => {
                     className="p-6 bg-barber-card border border-barber-gray/10 rounded-xl hover:border-barber-green text-center transition group active:scale-95"
                   >
                     <span className="block text-barber-light font-medium group-hover:text-white">{s.nombre}</span>
-                    <span className="block text-barber-green font-bold mt-2">${parseFloat(s.precio_actual).toLocaleString()}</span>
+                    <span className="block text-barber-green font-bold mt-2">${parseFloat(s.precio_actual).toLocaleString('es-AR')}</span>
                   </button>
                 ))}
                 
@@ -307,11 +267,41 @@ const TransactionView = () => {
           {step === 2 && (selectedService || isCustomCharge) && (
             <div className="bg-barber-card p-6 rounded-xl border border-barber-gray/20 shadow-lg animate-fade-in">
               
-              {/* CABECERA (Dinámica según si es de catálogo o manual) */}
+              {/* CABECERA DINÁMICA CON MULTIPLICADOR */}
               {!isCustomCharge ? (
-                <div className="flex justify-between items-center mb-6 pb-4 border-b border-barber-gray/10">
-                  <h3 className="text-lg font-semibold text-barber-light">{selectedService.nombre}</h3>
-                  <p className="text-xl font-bold text-barber-green">${parseFloat(selectedService.precio_actual).toLocaleString()}</p>
+                <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-barber-gray/10">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-semibold text-barber-light">{selectedService.nombre}</h3>
+                      <p className="text-sm text-barber-gray mt-1">
+                        Precio unitario: ${parseFloat(selectedService.precio_actual).toLocaleString('es-AR')}
+                      </p>
+                    </div>
+                    {/* El total en verde ahora refleja la multiplicación */}
+                    <p className="text-2xl font-bold text-barber-green">
+                      ${(parseFloat(selectedService.precio_actual) * cantidad).toLocaleString('es-AR')}
+                    </p>
+                  </div>
+                  
+                  {/* Selector de cantidad */}
+                  <div className="flex items-center justify-between bg-barber-dark p-2 rounded-lg border border-barber-gray/20">
+                    <span className="text-sm text-barber-gray ml-2">Cantidad de cortes:</span>
+                    <div className="flex items-center">
+                      <button 
+                        onClick={() => handleCantidadChange(cantidad - 1)}
+                        className="w-10 h-10 flex items-center justify-center text-xl text-barber-gray hover:text-white hover:bg-barber-gray/10 rounded-lg transition"
+                      >
+                        -
+                      </button>
+                      <span className="w-12 text-center font-bold text-white text-lg">{cantidad}</span>
+                      <button 
+                        onClick={() => handleCantidadChange(cantidad + 1)}
+                        className="w-10 h-10 flex items-center justify-center text-xl text-barber-gray hover:text-white hover:bg-barber-gray/10 rounded-lg transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="mb-6 pb-4 border-b border-barber-gray/10 flex flex-col gap-4">
@@ -336,19 +326,6 @@ const TransactionView = () => {
                       onChange={(e) => handleCustomMontoChange(e.target.value)} 
                       className="w-full bg-barber-dark text-white p-3 rounded-lg border border-barber-gray/20 focus:border-barber-green outline-none font-bold" 
                     />
-                  </div>
-                  {/* CHECKBOX DE APORTE "DONACION"*/}
-                  <div className="flex items-center gap-2 mt-4 bg-barber-dark/50 p-3 rounded-lg border border-barber-gray/10">
-                    <input
-                      type="checkbox"
-                      id="esAporte"
-                      checked={isAporte}
-                      onChange={(e) => setIsAporte(e.target.checked)}
-                      className="w-4 h-4 text-barber-green bg-barber-dark border-barber-gray rounded focus:ring-barber-green"
-                    />
-                    <label htmlFor="esAporte" className="text-sm text-barber-gray cursor-pointer">
-                      Es un aporte externo (No suma a estadísticas)
-                    </label>
                   </div>
                 </div>
               )}
@@ -386,13 +363,12 @@ const TransactionView = () => {
 
               <div className="flex gap-3">
                 <button 
-                  onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); }} 
+                  onClick={() => { setStep(1); setIsCustomCharge(false); setMetodoPago(''); setCantidad(1); }} 
                   disabled={isSubmitting}
                   className="flex-1 p-3 text-barber-gray hover:text-white transition disabled:opacity-50"
                 >
                   Volver
                 </button>
-                {/* BOTÓN DE CONFIRMAR INGRESO MODIFICADO */}
                 <button 
                   onClick={handleConfirmar} 
                   disabled={!metodoPago || isSubmitting} 
@@ -470,7 +446,6 @@ const TransactionView = () => {
 
           </div>
 
-          {/* BOTÓN DE CONFIRMAR EGRESO MODIFICADO */}
           <button 
             onClick={handleConfirmar} 
             disabled={!metodoPago || !montoTotalEgreso || !conceptoEgreso || !selectedCategoria || isSubmitting} 
