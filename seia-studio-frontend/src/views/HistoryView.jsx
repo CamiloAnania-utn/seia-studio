@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchTransacciones, eliminarTransaccion } from '../services/api'; // Asegúrate de exportar eliminarTransaccion en api.js
+import { fetchTransacciones, deleteTransaccion } from '../services/api'; // Asegúrate de exportar eliminarTransaccion en api.js
 import { Search, Filter, Trash2 } from 'lucide-react';
 
 const HistoryView = () => {
@@ -60,7 +60,7 @@ const HistoryView = () => {
     
     setIsDeleting(true);
     try {
-      await eliminarTransaccion(id);
+      await deleteTransaccion(id);
       await loadData(); // Recarga la tabla
       setSelectedIds(prev => prev.filter(item => item !== id)); // Quita de seleccionados si estaba
     } catch (error) {
@@ -77,7 +77,7 @@ const HistoryView = () => {
     setIsDeleting(true);
     try {
       // Borramos en paralelo para que sea rápido
-      await Promise.all(selectedIds.map(id => eliminarTransaccion(id)));
+      await Promise.all(selectedIds.map(id => deleteTransaccion(id)));
       await loadData(); // Recargamos la tabla con los datos nuevos
       setSelectedIds([]); // Limpiamos la selección
     } catch (error) {
