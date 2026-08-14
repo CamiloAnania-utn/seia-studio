@@ -222,9 +222,23 @@ const TransactionView = () => {
     return fecha.toLocaleDateString('es-AR', opciones).charAt(0).toUpperCase() + fecha.toLocaleDateString('es-AR', opciones).slice(1);
   };
 
+  // Obtener fecha actual sin hora para comparaciones
+  const obtenerHoyEnNocheLocal = () => {
+    const hoy = new Date();
+    return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59);
+  };
+
   const cambiarFecha = (dias) => {
     const nuevaFecha = new Date(fechaTransaccion);
     nuevaFecha.setDate(nuevaFecha.getDate() + dias);
+    
+    // No permitir fechas en el futuro
+    if (nuevaFecha > obtenerHoyEnNocheLocal()) {
+      setNotificacion({ show: true, mensaje: "No puedes registrar transacciones de días futuros.", tipo: 'error' });
+      setTimeout(() => setNotificacion({ show: false, mensaje: '', tipo: '' }), 3000);
+      return;
+    }
+    
     setFechaTransaccion(nuevaFecha);
   };
 
@@ -282,8 +296,13 @@ const TransactionView = () => {
 
         <button
           onClick={() => cambiarFecha(1)}
-          className="p-2 text-barber-green hover:bg-barber-green/10 rounded-lg transition"
-          title="Día siguiente"
+          disabled={fechaTransaccion >= obtenerHoyEnNocheLocal()}
+          className={`p-2 rounded-lg transition ${
+            fechaTransaccion >= obtenerHoyEnNocheLocal()
+              ? 'text-barber-gray/50 cursor-not-allowed'
+              : 'text-barber-green hover:bg-barber-green/10'
+          }`}
+          title={fechaTransaccion >= obtenerHoyEnNocheLocal() ? "No puedes ir a días futuros" : "Día siguiente"}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

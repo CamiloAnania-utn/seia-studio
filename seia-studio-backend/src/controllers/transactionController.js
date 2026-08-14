@@ -6,11 +6,35 @@ const crearTransaccion = async (req, res) => {
     // AÑADIDO: Extraemos 'es_aporte' del req.body junto con el resto de datos
     const { concepto, tipo, monto_efectivo, monto_transferencia, catalogo_id, categoria_id, fecha, es_aporte } = req.body;
 
-    const fechaTransaccion = fecha ? new Date(fecha) : new Date();
+    // Parsear fecha en zona horaria local, no UTC
+    // Cuando recibimos "2026-08-14", lo convertimos a fecha local, no a UTC
+    let fechaTransaccion;
+    if (fecha) {
+      const [year, month, day] = fecha.split('-').map(Number);
+      const ahora = new Date();
+      // Usar el día elegido pero con la hora actual
+      fechaTransaccion = new Date(year, month - 1, day, ahora.getHours(), ahora.getMinutes(), ahora.getSeconds());
+      
+      // Validación: No permitir fechas en el futuro
+      const hoy = new Date();
+      const hoyAlFinal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59);
+      if (fechaTransaccion > hoyAlFinal) {
+        return res.status(400).json({ error: 'No se pueden registrar transacciones de días futuros' });
+      }
+    } else {
+      fechaTransaccion = new Date();
+    }
 
     // 1. Validación básica de presencia
     if (!concepto || !tipo) {
       return res.status(400).json({ error: 'El concepto y el tipo (Ingreso/Egreso) son obligatorios' });
+    }
+    
+    // 2. Validación adicional: Asegurar que la fecha no sea futura (por si acaso)
+    const hoy = new Date();
+    const hoyAlFinal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59);
+    if (fechaTransaccion > hoyAlFinal) {
+      return res.status(400).json({ error: 'No se pueden registrar transacciones de días futuros' });
     }
 
     // 2. Validación estricta de Llaves Foráneas (Para evitar desastres contables)
