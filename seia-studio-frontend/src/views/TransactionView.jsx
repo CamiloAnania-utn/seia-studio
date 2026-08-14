@@ -148,6 +148,12 @@ const TransactionView = () => {
         ? conceptoCustom 
         : (cantidad > 1 ? `${cantidad}x ${selectedService.nombre}` : selectedService.nombre);
 
+      // Extraer fecha en formato local (no UTC) para evitar problemas de zona horaria
+      const year = fechaTransaccion.getFullYear();
+      const month = String(fechaTransaccion.getMonth() + 1).padStart(2, '0');
+      const day = String(fechaTransaccion.getDate()).padStart(2, '0');
+      const fechaLocal = `${year}-${month}-${day}`;
+
       payload = {
         catalogo_id: isCustomCharge ? null : selectedService.id,
         concepto: conceptoFinal,
@@ -156,7 +162,7 @@ const TransactionView = () => {
         monto_transferencia: parseFloat(montoTransferencia || 0),
         // INYECTAMOS EL APORTE AL BACKEND (solo aplica si es cobro custom y el check está marcado)
         es_aporte: isCustomCharge ? esAporte : false,
-        fecha: fechaTransaccion.toISOString().split('T')[0] // Formato YYYY-MM-DD
+        fecha: fechaLocal // Formato YYYY-MM-DD en zona horaria local
       };
     } else {
       if (!selectedCategoria || !conceptoEgreso || !montoTotalEgreso || !metodoPago) {
@@ -171,7 +177,7 @@ const TransactionView = () => {
         tipo: 'Egreso',
         monto_efectivo: metodoPago === 'Efectivo' ? parseFloat(montoTotalEgreso) : 0,
         monto_transferencia: metodoPago === 'Transferencia' ? parseFloat(montoTotalEgreso) : 0,
-        fecha: fechaTransaccion.toISOString().split('T')[0] // Formato YYYY-MM-DD
+        fecha: fechaLocal // Formato YYYY-MM-DD en zona horaria local
       };
     }
 
