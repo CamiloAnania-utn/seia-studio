@@ -57,7 +57,7 @@ const RecentTransactions = ({ data = [], onAnular }) => {
                   // Agregamos la clase "group" al tr para detectar el hover
                   <tr key={t.id} className="group border-b border-barber-gray/10 hover:bg-barber-dark/50 transition-colors">
                     <td className="py-3 px-4 text-barber-light whitespace-nowrap">
-                      {new Date(t.createdAt || t.fecha).toLocaleDateString('es-AR', {
+                      {new Date(t.fecha).toLocaleDateString('es-AR', {
                         day: '2-digit', month: 'short', year: 'numeric'
                       })}
                     </td>
