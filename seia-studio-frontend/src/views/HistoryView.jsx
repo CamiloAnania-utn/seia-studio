@@ -92,7 +92,34 @@ const HistoryView = () => {
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((t) => {
                   const total = Number(t.monto_efectivo || 0) + Number(t.monto_transferencia || 0);
-                  const isIngreso = t.tipo === 'Ingreso';
+                  
+                  // NUEVO: Lógica de Aportes vs Ingresos/Egresos Operativos (igual a RecentTransactions)
+                  const isAporte = t.es_aporte;
+                  const isIngreso = t.tipo === 'Ingreso' && !isAporte;
+                  const isEgreso = t.tipo === 'Egreso';
+
+                  // Clases dinámicas para la etiqueta (badge)
+                  let badgeClass = 'bg-barber-gray/10 text-barber-gray';
+                  let badgeText = 'APORTE';
+
+                  if (isIngreso) {
+                    badgeClass = 'bg-barber-green/10 text-barber-green';
+                    badgeText = 'INGRESO';
+                  } else if (isEgreso) {
+                    badgeClass = 'bg-red-500/10 text-red-400';
+                    badgeText = 'EGRESO';
+                  }
+
+                  // Clases dinámicas para el monto
+                  let amountClass = 'text-barber-gray font-normal';
+                  let sign = '+';
+
+                  if (isIngreso) {
+                    amountClass = 'text-barber-green font-bold';
+                  } else if (isEgreso) {
+                    amountClass = 'text-red-400 font-bold';
+                    sign = '-';
+                  }
                   
                   // Determinamos cómo se pagó basándonos en los montos
                   let metodo = 'Mixto';
@@ -110,19 +137,15 @@ const HistoryView = () => {
                         {t.concepto || 'Transacción sin detalle'}
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
-                          isIngreso ? 'bg-barber-green/10 text-barber-green' : 'bg-red-500/10 text-red-400'
-                        }`}>
-                          {t.tipo}
+                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${badgeClass}`}>
+                          {badgeText}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-barber-gray">
                         {metodo}
                       </td>
-                      <td className={`py-4 px-6 font-bold text-right whitespace-nowrap ${
-                        isIngreso ? 'text-barber-green' : 'text-red-400'
-                      }`}>
-                        {isIngreso ? '+' : '-'}${total.toLocaleString('es-AR')}
+                      <td className={`py-4 px-6 text-right whitespace-nowrap ${amountClass}`}>
+                        {sign}${total.toLocaleString('es-AR')}
                       </td>
                     </tr>
                   );
