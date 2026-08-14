@@ -122,6 +122,12 @@ const TransactionView = () => {
   // --- FUNCIÓN CENTRAL DE GUARDADO ---
   const handleConfirmar = async () => {
     if (isSubmitting) return;
+    
+    // ✅ CORRECCIÓN: Extraemos la fecha AQUÍ ARRIBA para que esté disponible en todo el código
+    const year = fechaTransaccion.getFullYear();
+    const month = String(fechaTransaccion.getMonth() + 1).padStart(2, '0');
+    const day = String(fechaTransaccion.getDate()).padStart(2, '0');
+    const fechaLocal = `${year}-${month}-${day}`;
 
     let payload = {};
 
