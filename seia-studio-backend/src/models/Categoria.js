@@ -23,7 +23,7 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: false
   }
 }, {
-  timestamps: true, // Registra createdAt y updatedAt para auditoría
+  timestamps: false, // Las categorías son fijas, no necesitamos rastrear cuándo se crearon
   tableName: 'categorias'
 });
 
