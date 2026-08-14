@@ -333,7 +333,7 @@ const TransactionView = () => {
                   onClick={handleCustomChargeInit}
                   className="p-6 bg-barber-dark border border-dashed border-barber-green/50 rounded-xl hover:border-barber-green text-center transition group active:scale-95 flex flex-col items-center justify-center"
                 >
-                  <span className="block text-barber-green font-medium">✨ Monto Libre</span>
+                  <span className="block text-barber-green font-medium">Monto Libre</span>
                   <span className="block text-barber-gray text-xs mt-2">Venta manual o Aportes</span>
                 </button>
               </div>
