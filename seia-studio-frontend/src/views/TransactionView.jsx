@@ -37,6 +37,9 @@ const TransactionView = () => {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const [montoTransferencia, setMontoTransferencia] = useState(0);
 
+  // --- ESTADO PARA FECHA DE TRANSACCIÓN ---
+  const [fechaTransaccion, setFechaTransaccion] = useState(new Date());
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cargar datos iniciales
@@ -152,7 +155,8 @@ const TransactionView = () => {
         monto_efectivo: parseFloat(montoEfectivo || 0),
         monto_transferencia: parseFloat(montoTransferencia || 0),
         // INYECTAMOS EL APORTE AL BACKEND (solo aplica si es cobro custom y el check está marcado)
-        es_aporte: isCustomCharge ? esAporte : false
+        es_aporte: isCustomCharge ? esAporte : false,
+        fecha: fechaTransaccion.toISOString().split('T')[0] // Formato YYYY-MM-DD
       };
     } else {
       if (!selectedCategoria || !conceptoEgreso || !montoTotalEgreso || !metodoPago) {
@@ -167,6 +171,7 @@ const TransactionView = () => {
         tipo: 'Egreso',
         monto_efectivo: metodoPago === 'Efectivo' ? parseFloat(montoTotalEgreso) : 0,
         monto_transferencia: metodoPago === 'Transferencia' ? parseFloat(montoTotalEgreso) : 0,
+        fecha: fechaTransaccion.toISOString().split('T')[0] // Formato YYYY-MM-DD
       };
     }
 
@@ -205,6 +210,18 @@ const TransactionView = () => {
     }
   };
 
+  // Funciones para manipular la fecha
+  const formatearFecha = (fecha) => {
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return fecha.toLocaleDateString('es-AR', opciones).charAt(0).toUpperCase() + fecha.toLocaleDateString('es-AR', opciones).slice(1);
+  };
+
+  const cambiarFecha = (dias) => {
+    const nuevaFecha = new Date(fechaTransaccion);
+    nuevaFecha.setDate(nuevaFecha.getDate() + dias);
+    setFechaTransaccion(nuevaFecha);
+  };
+
   if (loading) return <div className="text-barber-gray p-4">Iniciando sistema POS...</div>;
 
   return (
@@ -232,6 +249,39 @@ const TransactionView = () => {
           }`}
         >
           Registrar Gasto
+        </button>
+      </div>
+
+      {/* SELECTOR DE FECHA */}
+      <div className="flex items-center justify-center gap-4 mb-8 px-4 py-5 bg-barber-card rounded-xl border border-barber-gray/20">
+        <button
+          onClick={() => cambiarFecha(-1)}
+          className="p-2 text-barber-green hover:bg-barber-green/10 rounded-lg transition"
+          title="Día anterior"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <div className="text-center flex-1">
+          <p className="text-barber-gray text-xs uppercase tracking-wide">Fecha de registro</p>
+          <p className="text-barber-light font-semibold text-lg mt-1">
+            {formatearFecha(fechaTransaccion)}
+          </p>
+          <p className="text-barber-gray text-xs mt-1">
+            {fechaTransaccion.toLocaleDateString('es-AR')}
+          </p>
+        </div>
+
+        <button
+          onClick={() => cambiarFecha(1)}
+          className="p-2 text-barber-green hover:bg-barber-green/10 rounded-lg transition"
+          title="Día siguiente"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
 
